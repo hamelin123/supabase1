@@ -1,0 +1,34 @@
+name: Deploy to Self-hosted Supabase
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/functions/**']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Deno
+      uses: denoland/setup-deno@v1
+      with:
+        deno-version: v1.x
+    
+    - name: Validate Functions
+      run: |
+        for func in supabase/functions/*/index.ts; do
+          deno check "$func"
+        done
+    
+    - name: Deploy to Server
+      run: |
+        # Copy functions to server
+        rsync -avz --delete supabase/functions/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/supabase/volumes/functions/
+        
+        # Restart container
+        ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+          "cd /opt/supabase && docker compose restart functions --no-deps"
+        
+        # Health check
+        curl -f http://${{ secrets.DEPLOY_HOST }}:8000/functions/v1/health

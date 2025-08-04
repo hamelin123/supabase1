@@ -1,0 +1,6 @@
+scrape_configs:
+  - job_name: 'supabase-functions'
+    static_configs:
+      - targets: ['functions:8000']
+    metrics_path: '/functions/v1/health'
+    scrape_interval: 30s
