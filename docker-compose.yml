@@ -563,4 +563,5 @@ services:
 
 volumes:
   db-config:
+  grafana-storage:
 
